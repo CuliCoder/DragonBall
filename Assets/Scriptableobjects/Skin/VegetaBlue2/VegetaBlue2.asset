@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5000843e0365d04899cd805b540ef0c, type: 3}
+  m_Name: VegetaBlue2
+  m_EditorClassIdentifier: 
+  skinName: 1
+  HeadAnimations:
+  - {fileID: 11400000, guid: 6f2c583e1f3f7ee43a61c757e499537b, type: 2}
+  - {fileID: 11400000, guid: c718aa24a99daa648ac771d8e78e03bd, type: 2}
+  BodyAnimations:
+  - {fileID: 11400000, guid: db7fa44f6ec4c1c4a96d64e39798211c, type: 2}
+  - {fileID: 11400000, guid: 45cde2ca53c295c439e2ef461892f791, type: 2}
+  LegsAnimations:
+  - {fileID: 11400000, guid: 63ce2c0c782d25c4f964347c05474665, type: 2}
+  - {fileID: 11400000, guid: 099a8dee2ce250c40a0649e1b4e9f7c2, type: 2}

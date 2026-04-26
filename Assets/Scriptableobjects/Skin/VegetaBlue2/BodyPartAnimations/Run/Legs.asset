@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 039c3fcdcd374a94aa1e503a104e068f, type: 3}
+  m_Name: Legs
+  m_EditorClassIdentifier: 
+  animationType: 1
+  frames:
+  - {fileID: 21300000, guid: 1cc68e50f2bd28546803c113cd964e73, type: 3}
+  - {fileID: 21300000, guid: b771c2e0e8eb4934eb4c9a6302ea9bba, type: 3}
+  - {fileID: 21300000, guid: 95eb39faee7468d4f95eea0c09b9a2e6, type: 3}
+  - {fileID: 21300000, guid: d4d93c34edbb5e74eab78b5b56a7490f, type: 3}
+  frameRate: 0.1
+  loop: 1
+  offset: {x: -0.05, y: -0.26}

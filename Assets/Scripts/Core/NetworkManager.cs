@@ -43,11 +43,13 @@ public class NetworkManager : MonoBehaviour
 
     // ========== EVENTS cho GameClient đăng ký ==========
     public event Action<S_WorldStatePacket> OnWorldState;
-    public event Action<S_PlayerJoinedPacket> OnPlayerJoined;
     public event Action<S_PlayerLeftPacket> OnPlayerLeft;
     public event Action<S_ChatPacket> OnChat;
     public event Action<S_JoinRoomAckPacket> OnJoinRoomAck;
     public event Action<S_ErrorPacket> OnError;
+    public event Action<S_ListRoomsPacket> OnListRooms;
+    public event Action<S_JoinWorldPacket> OnJoinWorldAck;
+    public event Action<S_TeleportPacket> OnTeleport;
     public event Action OnDisconnected;
 
     // ============================================================
@@ -65,21 +67,25 @@ public class NetworkManager : MonoBehaviour
         // Mỗi loại packet → forward ra event tương ứng
         // Game logic subscribe event ở GameClient.cs — không đụng vào đây
         _dispatcher.Register<S_WorldStatePacket>(PacketType.S_WorldState, p => OnWorldState?.Invoke(p));
-        _dispatcher.Register<S_PlayerJoinedPacket>(PacketType.S_PlayerJoined, p => OnPlayerJoined?.Invoke(p));
         _dispatcher.Register<S_PlayerLeftPacket>(PacketType.S_PlayerLeft, p => OnPlayerLeft?.Invoke(p));
         _dispatcher.Register<S_ChatPacket>(PacketType.S_Chat, p => OnChat?.Invoke(p));
+        _dispatcher.Register<S_ListRoomsPacket>(PacketType.S_ListRooms, p =>
+        {
+            LocalPlayerId = p.PlayerId;
+            OnListRooms?.Invoke(p);
+        });
         _dispatcher.Register<S_JoinRoomAckPacket>(PacketType.S_JoinRoomAck, p =>
         {
-            // Cache lại thông tin phòng và player id
-            LocalPlayerId = p.PlayerId;
             CurrentRoomId = p.RoomId;
             OnJoinRoomAck?.Invoke(p);
         });
+        _dispatcher.Register<S_JoinWorldPacket>(PacketType.S_JoinWorld, p => OnJoinWorldAck?.Invoke(p));
         _dispatcher.Register<S_ErrorPacket>(PacketType.S_Error, p =>
         {
             Debug.LogWarning($"[Server Error] {p.Message}");
             OnError?.Invoke(p);
         });
+        _dispatcher.Register<S_TeleportPacket>(PacketType.S_Teleport, p => OnTeleport?.Invoke(p));
     }
 
     // ============================================================
@@ -92,6 +98,7 @@ public class NetworkManager : MonoBehaviour
             _client = new TcpClient();
             await _client.ConnectAsync(IPAddress.Parse(ip), port);
             _stream = _client.GetStream();
+            Debug.Log($"[Network] LocalPlayerId: {LocalPlayerId}");
             _cts = new CancellationTokenSource();
 
             Debug.Log($"[Network] Kết nối thành công: {ip}:{port}");

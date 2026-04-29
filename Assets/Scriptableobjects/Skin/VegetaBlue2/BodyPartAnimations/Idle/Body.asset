@@ -17,3 +17,4 @@ MonoBehaviour:
   - {fileID: 21300000, guid: c787bf622699eb14e81db5dc7cf189b2, type: 3}
   frameRate: 0.1
   loop: 1
+  offset: {x: 0, y: 0}

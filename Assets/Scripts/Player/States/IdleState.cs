@@ -20,9 +20,13 @@ public class IdleState : IState
 
     public void Update()
     {
-        if (InputManager.Instance.MoveInput != Vector2.zero)
+        if (player is LocalPlayerController localPlayer)
         {
-            stateManager.ChangeState(stateManager.runState);
+            if (localPlayer.Velocity.x != 0)
+            {
+                stateManager.ChangeState(stateManager.runState);
+            }
         }
+
     }
 }

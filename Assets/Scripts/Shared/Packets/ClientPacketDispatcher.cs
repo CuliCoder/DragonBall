@@ -21,7 +21,7 @@ public class ClientPacketDispatcher
         _handlers[type] = packet =>
         {
             if (packet is T typed)
-                handler(typed);
+                handler(typed); 
             else
                 Debug.LogWarning($"[Dispatcher] Type mismatch cho {type}");
         };

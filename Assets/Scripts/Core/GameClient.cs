@@ -10,37 +10,45 @@
 // ============================================================
 using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
+using UnityEngine.SocialPlatforms;
+using UnityEditor;
 public class GameClient : MonoBehaviour
 {
     [Header("Config")]
-    [SerializeField] private string _serverIp   = "127.0.0.1";
-    [SerializeField] private int    _serverPort  = 8888;
-    [SerializeField] private string _roomId      = "room_01";
+    [SerializeField] private string _serverIp = "127.0.0.1";
+    [SerializeField] private int _serverPort = 8888;
 
     [Header("Prefabs")]
-    [SerializeField] private GameObject _remotePlayerPrefab;
-    [SerializeField] private Transform  _localPlayer;
+    [SerializeField] private GameObject PlayerPrefab;
+    [SerializeField] private CardRoom _cardRoomPrefab;
+    [SerializeField] private Transform _cardParent;
+    [SerializeField] private CardPlayer _cardPlayerPrefab;
+    [SerializeField] private TextMeshProUGUI titleText;
+    [SerializeField] private GameObject btnPlay;
 
     // ========== LOCAL PLAYER INPUT ==========
     private Vector2 _inputDirection;
-    private bool    _jumpPressed;
-    private bool    _attackPressed;
-    private int     _clientTick = 0;
+    private bool _jumpPressed;
+    private bool _attackPressed;
+    private int _clientTick = 0;
 
     // ========== REMOTE PLAYERS ==========
     // sessionId → GameObject của remote player
     private readonly Dictionary<int, RemotePlayer> _remotePlayers = new();
+    private LocalPlayerController _localPlayer;
 
     // ============================================================
     private async void Start()
     {
+        DontDestroyOnLoad(gameObject); // giữ GameClient qua các scene
         // Subscribe events TRƯỚC khi connect
         SubscribeNetworkEvents();
 
         await NetworkManager.Instance.ConnectAsync(_serverIp, _serverPort);
 
         // Sau khi connect → join room
-        await NetworkManager.Instance.SendAsync(new C_JoinRoomPacket { RoomId = _roomId });
+        await NetworkManager.Instance.SendAsync(new C_GetRoomsPacket()); // Lấy danh sách phòng trước
     }
 
     // ============================================================
@@ -51,13 +59,15 @@ public class GameClient : MonoBehaviour
     {
         var net = NetworkManager.Instance;
 
-        net.OnJoinRoomAck  += HandleJoinRoomAck;
-        net.OnWorldState   += HandleWorldState;   // ← quan trọng nhất
-        net.OnPlayerJoined += HandlePlayerJoined;
-        net.OnPlayerLeft   += HandlePlayerLeft;
-        net.OnChat         += HandleChat;
-        net.OnError        += HandleError;
+        net.OnJoinRoomAck += HandleJoinRoomAck;
+        net.OnWorldState += HandleWorldState;   // ← quan trọng nhất
+        net.OnPlayerLeft += HandlePlayerLeft;
+        net.OnChat += HandleChat;
+        net.OnError += HandleError;
         net.OnDisconnected += HandleDisconnected;
+        net.OnListRooms += HandleListRooms;
+        net.OnJoinWorldAck += HandleJoinWorldAck;
+        net.OnTeleport += HandleTeleport;
     }
 
     private void OnDestroy()
@@ -65,13 +75,15 @@ public class GameClient : MonoBehaviour
         var net = NetworkManager.Instance;
         if (net == null) return;
 
-        net.OnJoinRoomAck  -= HandleJoinRoomAck;
-        net.OnWorldState   -= HandleWorldState;
-        net.OnPlayerJoined -= HandlePlayerJoined;
-        net.OnPlayerLeft   -= HandlePlayerLeft;
-        net.OnChat         -= HandleChat;
-        net.OnError        -= HandleError;
+        net.OnJoinRoomAck -= HandleJoinRoomAck;
+        net.OnWorldState -= HandleWorldState;
+        net.OnPlayerLeft -= HandlePlayerLeft;
+        net.OnChat -= HandleChat;
+        net.OnError -= HandleError;
         net.OnDisconnected -= HandleDisconnected;
+        net.OnListRooms -= HandleListRooms;
+        net.OnJoinWorldAck -= HandleJoinWorldAck;
+        net.OnTeleport -= HandleTeleport;
     }
 
     // ============================================================
@@ -84,7 +96,7 @@ public class GameClient : MonoBehaviour
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical")
         );
-        _jumpPressed   = Input.GetButton("Jump");
+        _jumpPressed = Input.GetButton("Jump");
         _attackPressed = Input.GetMouseButton(0);
 
         // Interpolate remote players mỗi frame (mượt hơn)
@@ -102,32 +114,79 @@ public class GameClient : MonoBehaviour
     // ============================================================
     private void FixedUpdate()
     {
-        if (!NetworkManager.Instance.IsConnected) return;
+        // if (!NetworkManager.Instance.IsConnected) return;
 
-        _clientTick++;
+        // _clientTick++;
 
-        // Gửi input lên server mỗi fixed tick
-        _ = NetworkManager.Instance.SendAsync(new C_InputPacket
-        {
-            DirX   = _inputDirection.x,
-            DirY   = _inputDirection.y,
-            Jump   = _jumpPressed,
-            Attack = _attackPressed,
-            Tick   = _clientTick
-        });
+        // // Gửi input lên server mỗi fixed tick
+        // _ = NetworkManager.Instance.SendAsync(new C_InputPacket
+        // {
+        //     DirX = _inputDirection.x,
+        //     DirY = _inputDirection.y,
+        //     Fly = _jumpPressed,
+        //     Attack = _attackPressed,
+        //     Tick = _clientTick
+        // });
 
-        // Reset button flags (chỉ gửi 1 lần per press)
-        _jumpPressed   = false;
-        _attackPressed = false;
+        // // Reset button flags (chỉ gửi 1 lần per press)
+        // _jumpPressed = false;
+        // _attackPressed = false;
     }
+    private void HandleListRooms(S_ListRoomsPacket packet)
+    {
+        titleText.text = $"Danh sách phòng";
+        foreach (Transform child in _cardParent)
+        {
+            if (child != null)
+                Destroy(child.gameObject);
+        }
+        Debug.Log($"[GameClient] Danh sách phòng ({packet.Rooms.Count}):");
+        foreach (var room in packet.Rooms)
+        {
+            Debug.Log($"- {room.RoomId} | Players: {room.PlayerCount}/{room.MaxPlayer}");
+            // Hiển thị card phòng trên UI
+            if (_cardRoomPrefab != null)
+            {
+                var card = Instantiate(_cardRoomPrefab, Vector3.zero, Quaternion.identity, _cardParent);
+                card.Initialize(room.RoomId, room.PlayerCount, room.MaxPlayer);
+                Debug.Log($"[GameClient] Hiển thị card cho phòng {room.RoomId}, có {room.PlayerCount} người chơi.");
+            }
+        }
+        btnPlay.SetActive(false);
+    }
+    private void HandleTeleport(S_TeleportPacket packet)
+    {
+        if (NetworkManager.Instance.LocalPlayerId != packet.SessionId) return;
 
+        if (_localPlayer != null)
+        {
+            _localPlayer.transform.position = new Vector3(packet.TargetPosition.X, packet.TargetPosition.Y, 0);
+            Debug.Log($"[GameClient] Teleported to {packet.TargetPosition}");
+        }
+    }
     // ============================================================
     //  PACKET HANDLERS
     //  Tất cả được gọi trong Update() (main thread) → an toàn
     // ============================================================
     private void HandleJoinRoomAck(S_JoinRoomAckPacket packet)
     {
-        Debug.Log($"[GameClient] Đã vào phòng: {packet.RoomId} | PlayerId: {packet.PlayerId}");
+        titleText.text = $"Danh sách người chơi";
+        foreach (Transform child in _cardParent)
+        {
+            if (child != null)
+                Destroy(child.gameObject);
+        }
+        foreach (var p in packet.CurrentPlayers)
+        {
+            Debug.Log($"- Player {p.PlayerId}");
+            if (_cardPlayerPrefab != null)
+            {
+                var card = Instantiate(_cardPlayerPrefab, Vector3.zero, Quaternion.identity, _cardParent);
+                card.Initialize(p.PlayerName, "test");
+                Debug.Log($"[GameClient] Hiển thị card cho player {p.PlayerName}");
+            }
+        }
+        btnPlay.SetActive(true);
     }
 
     // ============================================================
@@ -137,6 +196,7 @@ public class GameClient : MonoBehaviour
     // ============================================================
     private void HandleWorldState(S_WorldStatePacket packet)
     {
+        Debug.Log($"[GameClient] Nhận world state tick {packet.ServerTick} với {packet.Players.Count} player(s)");
         int localId = NetworkManager.Instance.LocalPlayerId;
 
         foreach (var playerState in packet.Players)
@@ -157,19 +217,33 @@ public class GameClient : MonoBehaviour
         }
     }
 
-    private void HandlePlayerJoined(S_PlayerJoinedPacket packet)
+    private void HandleJoinWorldAck(S_JoinWorldPacket packet)
     {
-        int localId = NetworkManager.Instance.LocalPlayerId;
-        if (packet.PlayerId == localId) return; // không spawn bản thân
-
-        Debug.Log($"[GameClient] {packet.PlayerName} vào phòng");
-
-        // Spawn remote player
-        if (_remotePlayerPrefab != null && !_remotePlayers.ContainsKey(packet.PlayerId))
+        foreach (PlayerState playerState in packet.CurrentPlayers)
         {
-            var go     = Instantiate(_remotePlayerPrefab);
-            var remote = new RemotePlayer(packet.PlayerId, packet.PlayerName, go.transform);
-            _remotePlayers[packet.PlayerId] = remote;
+            Debug.Log($"[GameClient] Player in world: {playerState.PlayerName} (ID: {playerState.PlayerId})");
+            if (NetworkManager.Instance.LocalPlayerId == playerState.PlayerId)
+            {
+                if (_localPlayer == null)
+                {
+                    var go = Instantiate(PlayerPrefab, new Vector3(playerState.X, playerState.Y, 0), Quaternion.identity);
+                    _localPlayer = go.AddComponent<LocalPlayerController>();
+                    _localPlayer.Initialize(playerState.PlayerId, playerState.PlayerName);
+                }
+                Debug.Log($"[GameClient] Local player instantiated with ID {playerState.PlayerName}");
+                continue;
+            }
+
+            Debug.Log($"[GameClient] {playerState.PlayerName} vào phòng, ID: {NetworkManager.Instance.LocalPlayerId}");
+
+            // Spawn remote player
+            if (PlayerPrefab != null && !_remotePlayers.ContainsKey(playerState.PlayerId))
+            {
+                var go = Instantiate(PlayerPrefab, new Vector3(playerState.X, playerState.Y, 0), Quaternion.identity);
+                RemotePlayer remotePlayer = go.AddComponent<RemotePlayer>();
+                remotePlayer.Initialize(playerState.PlayerId, playerState.PlayerName, go.transform, go.transform.position);
+                _remotePlayers[playerState.PlayerId] = remotePlayer;
+            }
         }
     }
 
@@ -211,56 +285,4 @@ public class GameClient : MonoBehaviour
     }
 }
 
-// ============================================================
-//  REMOTE PLAYER
-//  Chứa snapshot buffer để interpolate vị trí mượt
-//
-//  Tại sao cần interpolate?
-//    Server gửi 50Hz nhưng game render 60-144fps
-//    → cần nội suy giữa 2 snapshot để không giật
-// ============================================================
-public class RemotePlayer
-{
-    public int       PlayerId   { get; }
-    public string    PlayerName { get; }
-    public Transform Transform  { get; }
 
-    // Lưu 2 snapshot gần nhất để lerp giữa chúng
-    private PlayerStateData _from;
-    private PlayerStateData _to;
-    private float           _lerpT = 1f; // 0 = from, 1 = to
-    private const float     LERP_SPEED = 15f;
-
-    public RemotePlayer(int id, string name, Transform transform)
-    {
-        PlayerId   = id;
-        PlayerName = name;
-        Transform  = transform;
-
-        // Khởi tạo snapshot rỗng
-        _from = new PlayerStateData { PlayerId = id };
-        _to   = new PlayerStateData { PlayerId = id };
-    }
-
-    // Nhận snapshot mới từ server
-    public void PushSnapshot(PlayerStateData newState)
-    {
-        _from  = _to;          // snapshot cũ trở thành điểm xuất phát
-        _to    = newState;     // snapshot mới là đích đến
-        _lerpT = 0f;           // reset lerp
-    }
-
-    // Gọi mỗi frame trong Update() để render mượt
-    public void InterpolatePosition()
-    {
-        if (_lerpT >= 1f) return;
-
-        _lerpT = Mathf.MoveTowards(_lerpT, 1f, Time.deltaTime * LERP_SPEED);
-
-        Transform.position = Vector3.Lerp(
-            new Vector3(_from.X, _from.Y, 0),
-            new Vector3(_to.X,   _to.Y,   0),
-            _lerpT
-        );
-    }
-}

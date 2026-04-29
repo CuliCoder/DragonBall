@@ -1,32 +1,51 @@
+using TMPro;
 using UnityEngine;
-public class PlayerController : MonoBehaviour
+public abstract class PlayerController : MonoBehaviour
 {
-    // private TcpServerManager _tcpServerManager;
-    // void Start()
-    // {
-    //     _tcpServerManager = TcpServerManager.Instance;
-    // }
-    // void Update()
-    // {
-    //     // Đọc Input ở Update cho mượt (nhưng chưa gửi vội)
-    //     float h = Input.GetAxisRaw("Horizontal");
-    //     float v = Input.GetAxisRaw("Vertical");
+    private TextMeshPro _playerIdText;
+    public int PlayerId { get; private set; }
+    public string PlayerName { get; private set; }
+    public void Initialize(int playerId, string playerName)
+    {
+        PlayerId = playerId;
+        PlayerName = playerName;
+        setName(PlayerName);
+        GetComponent<PlayerStateManager>().Init(this, GetComponent<PlayerAnimationManager>());
+    }
+    private void setName(string name)
+    {
+        if (_playerIdText == null)
+        {
+            var nameTransform = transform.Find("name");
+            if (nameTransform == null)
+            {
+                Debug.LogError("Missing child 'name' on Player prefab");
+                return;
+            }
 
+            _playerIdText = nameTransform.GetComponent<TextMeshPro>();
+            if (_playerIdText == null)
+            {
+                Debug.LogError("Child 'name' does not have TextMeshPro");
+                return;
+            }
+        }
 
-    //     // Chỉ gửi khi đủ thời gian (VD: 0.05s) và thực sự CÓ bấm nút di chuyển
-    //     SendInputToServer(h, v); // Gọi hàm phụ trợ để gửi
-    // }
+        _playerIdText.text = name;
+    }
+    public void FacingDirection(Vector2 direction)
+    {
+        if (direction.x > 0)
+        {
+            transform.localScale = new Vector3(1, 1, 1);
+            transform.Find("name").localScale = new Vector3(0.1f, 0.1f, 1);
+        }
+        else if (direction.x < 0)
+        {
+            transform.localScale = new Vector3(-1, 1, 1);
+            transform.Find("name").localScale = new Vector3(-0.1f, 0.1f, 1);
+        }
+    }
+    public abstract void Move();
 
-    // // Tách riêng hàm gửi ra, không để async void ở Update
-    // private async void SendInputToServer(float h, float v)
-    // {
-    //     if (_tcpServerManager == null || _tcpServerManager._cts == null) return;
-
-    //     var data = PacketSerializer.Serialize(new C_PlayerInputPacket
-    //     {
-    //         inputDirection = new System.Numerics.Vector2(h, v)
-    //     });
-
-    //     await _tcpServerManager.SendPacketAsync(data, _tcpServerManager._cts.Token);
-    // }
 }

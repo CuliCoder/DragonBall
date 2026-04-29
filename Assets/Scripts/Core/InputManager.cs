@@ -21,8 +21,9 @@ public class InputManager : MonoBehaviour
     }
     private Vector2 GetMoveInput()
     {
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
+        int horizontal = (int)Input.GetAxisRaw("Horizontal");
+        int vertical = (int)Input.GetAxisRaw("Vertical");
+
         return new Vector2(horizontal, vertical);
     }
 }

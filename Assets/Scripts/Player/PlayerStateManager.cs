@@ -6,18 +6,12 @@ public class PlayerStateManager : MonoBehaviour
     public IState currentState { get; private set; }
     public IState idleState { get; private set; }
     public IState runState { get; private set; }
-    private void Awake()
+    public void Init(PlayerController playerController, PlayerAnimationManager animManager)
     {
-        if (player == null)
-        {
-            player = GetComponent<PlayerController>();
-            animationManager = GetComponent<PlayerAnimationManager>();
-        }
+        player = playerController;
+        animationManager = animManager;
         idleState = new IdleState(player, this);
         runState = new RunState(player, this);
-    }
-    private void Start()
-    {
         currentState = idleState;
         currentState.Enter();
     }

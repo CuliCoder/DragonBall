@@ -30,16 +30,28 @@ public class RemotePlayer : PlayerController
     // Nhận snapshot mới từ server
     public void PushSnapshot(PlayerState newState)
     {
-        _from = _to;          // snapshot cũ trở thành điểm xuất phát
-        _to = newState;     // snapshot mới là đích đến
-        _lerpT = 0f;           // reset lerp
+        _from = _to;   // snapshot cũ → điểm xuất phát lerp
+        _to = newState; // snapshot mới → đích đến
+        _lerpT = 0f;   // reset lerp
+
+        // Cập nhật hướng mặt dựa vào velocity từ server
+        if (Mathf.Abs(newState.VelX) > 0.01f)
+            FacingDirection(new Vector2(newState.VelX, 0));
+
+        // Cập nhật animation dựa vào AnimState từ server
+        var stateManager = GetComponent<PlayerStateManager>();
+        if (stateManager != null)
+        {
+            if (newState.AnimState == "run" && stateManager.currentState is not RunState)
+                stateManager.ChangeState(stateManager.runState);
+            else if (newState.AnimState == "idle" && stateManager.currentState is not IdleState)
+                stateManager.ChangeState(stateManager.idleState);
+        }
     }
 
     // Gọi mỗi frame trong Update() để render mượt
     public void InterpolatePosition()
     {
-        Debug.Log($"[RemotePlayer] New interpolated position for Player 0 {PlayerId}: ({Transform.position.x}, {Transform.position.y})");
-
         if (_lerpT >= 1f) return;
 
         _lerpT = Mathf.MoveTowards(_lerpT, 1f, Time.deltaTime * LERP_SPEED);
@@ -49,7 +61,6 @@ public class RemotePlayer : PlayerController
             new Vector3(_to.X, _to.Y, 0),
             _lerpT
         );
-        Debug.Log($"[RemotePlayer] New interpolated position for Player 1 {PlayerId}: ({Transform.position.x}, {Transform.position.y})");
     }
     public override void Move()
     {

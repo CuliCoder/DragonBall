@@ -196,16 +196,23 @@ public class GameClient : MonoBehaviour
     // ============================================================
     private void HandleWorldState(S_WorldStatePacket packet)
     {
-        Debug.Log($"[GameClient] Nhận world state tick {packet.ServerTick} với {packet.Players.Count} player(s)");
         int localId = NetworkManager.Instance.LocalPlayerId;
 
         foreach (var playerState in packet.Players)
         {
-            // Bỏ qua local player — vị trí do client prediction quyết định
             if (playerState.PlayerId == localId)
             {
-                // TODO: reconcile nếu lệch quá ngưỡng
-                // ReconcileLocalPlayer(playerState);
+                // Reconcile: nếu vị trí client lệch quá xa so với server → snap về
+                if (_localPlayer != null)
+                {
+                    var serverPos = new Vector3(playerState.X, playerState.Y, 0);
+                    float drift = Vector3.Distance(_localPlayer.transform.position, serverPos);
+                    if (drift > 2f)
+                    {
+                        _localPlayer.transform.position = serverPos;
+                        Debug.Log($"[Reconcile] Snap local player về server pos, drift={drift:F2}");
+                    }
+                }
                 continue;
             }
 
@@ -284,5 +291,3 @@ public class GameClient : MonoBehaviour
         _ = NetworkManager.Instance.SendAsync(new C_ChatPacket { Message = message });
     }
 }
-
-

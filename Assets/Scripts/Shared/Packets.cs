@@ -47,11 +47,8 @@ public class C_InputPacket : BasePacket
     public bool Fly { get; set; }
     public bool Attack { get; set; }
     public int Tick { get; set; }
-    public float CurrentPositionX { get; set; }
-    public float CurrentPositionY { get; set; }
-    public float TargetPositionX { get; set; }
-    public float TargetPositionY { get; set; }
     public float DeltaTime { get; set; }
+    public PlayerState PlayerState { get; set; }
 }
 
 public class C_JoinRoomPacket : BasePacket

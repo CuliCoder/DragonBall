@@ -14,8 +14,8 @@ public class LocalPlayerController : PlayerController
     private void FixedUpdate()
     {
         ApplyGravity();
-        verifyPositionWithServer();
         transform.position += (Vector3)Velocity;
+        verifyPositionWithServer();
         timer += Time.fixedDeltaTime;
         if (isFlying && timer > 1f)
         {
@@ -109,10 +109,14 @@ public class LocalPlayerController : PlayerController
             Fly = InputManager.Instance.MoveInput.y > 0,
             Attack = false,
             Tick = 0,
-            CurrentPositionX = currentPos.x,
-            CurrentPositionY = currentPos.y,
-            TargetPositionX = targetPos.x,
-            TargetPositionY = targetPos.y,
+            PlayerState = new PlayerState
+            {
+                X = currentPos.x,
+                Y = currentPos.y,
+                VelX = Velocity.x,
+                VelY = Velocity.y,
+                AnimState = isFlying ? "fly" : (Velocity.x != 0 ? "run" : "idle")
+            },
             DeltaTime = Time.fixedDeltaTime,
         };
         

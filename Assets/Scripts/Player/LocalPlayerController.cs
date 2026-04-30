@@ -3,20 +3,37 @@ using Cinemachine;
 public class LocalPlayerController : PlayerController
 {
     public const float SPEED = 5f;
+    private const float INPUT_SEND_INTERVAL = 1f / 30f;
     public Vector2 Velocity = Vector2.zero;
     private bool isGrounded = false;
     private float timer = 0f;
     private bool isFlying = true;
     public bool isBoom = false;
+    private float _inputSendTimer = 0f;
+    private bool _isInputSendLoopRunning = false;
+    private C_InputPacket _latestPendingInput;
     private void Awake()
     {
-        FindAnyObjectByType<CinemachineVirtualCamera>().Follow = transform;
+        if (CameraController.Instance != null)
+        {
+            CameraController.Instance.SetFollowTarget(transform);
+        }
+        else
+        {
+            FindAnyObjectByType<CinemachineVirtualCamera>().Follow = transform;
+        }
     }
     private void FixedUpdate()
     {
+        
         ApplyGravity();
         transform.position += (Vector3)Velocity;
-        verifyPositionWithServer();
+        _inputSendTimer += Time.fixedDeltaTime;
+        if (_inputSendTimer >= INPUT_SEND_INTERVAL)
+        {
+            _inputSendTimer = 0f;
+            verifyPositionWithServer();
+        }
         timer += Time.fixedDeltaTime;
         if (isFlying && timer > 1f)
         {
@@ -26,14 +43,15 @@ public class LocalPlayerController : PlayerController
     private void Update()
     {
         useBoom();
-        if(isBoom)
-        {
-            return;
-        }
         Move();
     }
     public override void Move()
     {
+        if(isBoom)
+        {
+            Velocity = Vector2.zero;
+            return;
+        }
         if (InputManager.Instance.MoveInput.x != 0)
         {
             Velocity = new Vector2(InputManager.Instance.MoveInput.x * SPEED * Time.fixedDeltaTime, Velocity.y);
@@ -82,7 +100,6 @@ public class LocalPlayerController : PlayerController
             return;
         }
         Velocity += new Vector2(0, -1f * Time.fixedDeltaTime);
-        Debug.Log($"Applying gravity. New velocity: {Velocity}");
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -106,14 +123,12 @@ public class LocalPlayerController : PlayerController
     private void verifyPositionWithServer()
     {
         // Gửi vị trí hiện tại đến server để xác nhận
-        if (!NetworkManager.Instance.IsConnected)
+        if (NetworkManager.Instance == null || !NetworkManager.Instance.IsConnected)
         {
-            Debug.LogWarning("[LocalPlayerController] Not connected to server, cannot send position");
             return;
         }
 
         var currentPos = transform.position;
-        var targetPos = currentPos + (Vector3)Velocity;
 
         var packet = new C_InputPacket
         {
@@ -134,14 +149,38 @@ public class LocalPlayerController : PlayerController
             DeltaTime = Time.fixedDeltaTime,
         };
 
-        Debug.Log($"[LocalPlayerController] Sending position: current ({currentPos.x:F2}, {currentPos.y:F2}), target ({targetPos.x:F2}, {targetPos.y:F2})");
-
-        // Log JSON payload để debug
-        string json = Newtonsoft.Json.JsonConvert.SerializeObject(packet);
-        Debug.Log($"[LocalPlayerController] JSON payload: {json}");
-
-        _ = NetworkManager.Instance.SendAsync(packet);
+        QueueLatestInput(packet);
     }
+
+    private void QueueLatestInput(C_InputPacket packet)
+    {
+        _latestPendingInput = packet;
+        if (_isInputSendLoopRunning)
+        {
+            return;
+        }
+
+        _ = SendInputLoopAsync();
+    }
+
+    private async System.Threading.Tasks.Task SendInputLoopAsync()
+    {
+        _isInputSendLoopRunning = true;
+        try
+        {
+            while (_latestPendingInput != null && NetworkManager.Instance != null && NetworkManager.Instance.IsConnected)
+            {
+                var packet = _latestPendingInput;
+                _latestPendingInput = null;
+                await NetworkManager.Instance.SendAsync(packet);
+            }
+        }
+        finally
+        {
+            _isInputSendLoopRunning = false;
+        }
+    }
+
     private string GetAnimationState()
     {
         if (isBoom)

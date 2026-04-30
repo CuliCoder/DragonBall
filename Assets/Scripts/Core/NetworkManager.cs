@@ -40,6 +40,7 @@ public class NetworkManager : MonoBehaviour
 
     // ========== DISPATCHER ==========
     private readonly ClientPacketDispatcher _dispatcher = new();
+    private const int MaxPacketsPerFrame = 1024;
 
     // ========== EVENTS cho GameClient đăng ký ==========
     public event Action<S_WorldStatePacket> OnWorldState;
@@ -50,6 +51,8 @@ public class NetworkManager : MonoBehaviour
     public event Action<S_ListRoomsPacket> OnListRooms;
     public event Action<S_JoinWorldPacket> OnJoinWorldAck;
     public event Action<S_TeleportPacket> OnTeleport;
+    public event Action<S_BossStatePacket> OnBossState;
+    public event Action<S_BossDefeatPacket> OnBossDefeated;
     public event Action OnDisconnected;
 
     // ============================================================
@@ -86,6 +89,8 @@ public class NetworkManager : MonoBehaviour
             OnError?.Invoke(p);
         });
         _dispatcher.Register<S_TeleportPacket>(PacketType.S_Teleport, p => OnTeleport?.Invoke(p));
+        _dispatcher.Register<S_BossStatePacket>(PacketType.S_BossState, p => OnBossState?.Invoke(p));
+        _dispatcher.Register<S_BossDefeatPacket>(PacketType.S_BossDefeated, p => OnBossDefeated?.Invoke(p));
     }
 
     // ============================================================
@@ -158,8 +163,13 @@ public class NetworkManager : MonoBehaviour
     // ============================================================
     private void Update()
     {
-        while (_receiveQueue.TryDequeue(out byte[] rawData))
+        int processed = 0;
+        S_WorldStatePacket latestWorldState = null;
+
+        while (processed < MaxPacketsPerFrame && _receiveQueue.TryDequeue(out byte[] rawData))
         {
+            processed++;
+
             // Sentinel: empty array = đã disconnect
             if (rawData.Length == 0)
             {
@@ -175,8 +185,51 @@ public class NetworkManager : MonoBehaviour
                 continue;
             }
 
+            // Ưu tiên độ trễ thấp: chỉ giữ world-state mới nhất trong frame hiện tại.
+            if (packet is S_WorldStatePacket worldState)
+            {
+                latestWorldState = worldState;
+                continue;
+            }
+
             // Dispatch tới đúng handler theo PacketType
             _dispatcher.Dispatch(packet);
+        }
+
+        // Nếu frame trước bị nghẽn queue, chủ động cắt bớt world-state cũ còn tồn đọng.
+        DrainStaleWorldStates(ref latestWorldState);
+        if (latestWorldState != null)
+            _dispatcher.Dispatch(latestWorldState);
+    }
+
+    private void DrainStaleWorldStates(ref S_WorldStatePacket latestWorldState)
+    {
+        const int MaxDrainPerFrame = 2048;
+        int drained = 0;
+
+        while (drained < MaxDrainPerFrame && _receiveQueue.TryPeek(out byte[] rawData))
+        {
+            // Sentinel disconnect phải được giữ lại cho vòng Update kế tiếp xử lý đúng flow.
+            if (rawData.Length == 0)
+                break;
+
+            if (rawData.Length < 4)
+            {
+                _receiveQueue.TryDequeue(out _);
+                drained++;
+                continue;
+            }
+
+            var packetType = (PacketType)BitConverter.ToUInt16(rawData, 2);
+            if (packetType != PacketType.S_WorldState)
+                break;
+
+            _receiveQueue.TryDequeue(out _);
+            drained++;
+
+            var packet = PacketSerializer.Deserialize(rawData) as S_WorldStatePacket;
+            if (packet != null)
+                latestWorldState = packet;
         }
     }
 

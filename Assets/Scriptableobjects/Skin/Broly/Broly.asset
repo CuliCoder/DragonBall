@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5000843e0365d04899cd805b540ef0c, type: 3}
+  m_Name: Broly
+  m_EditorClassIdentifier: 
+  skinName: 0
+  HeadAnimations:
+  - {fileID: 11400000, guid: e7886f0a2e940c442b6a5774d268f37c, type: 2}
+  - {fileID: 11400000, guid: f8e5d75dc032aab4ab1321119dec3f86, type: 2}
+  - {fileID: 11400000, guid: d9dc2b00801078047aeda63d56d5263f, type: 2}
+  BodyAnimations:
+  - {fileID: 11400000, guid: cf3871e54e87d2d4fbc6f7de865d6b36, type: 2}
+  - {fileID: 11400000, guid: f56c5150d4be5a344942c9689fdab2c7, type: 2}
+  - {fileID: 11400000, guid: cf1f1125df8a7254dadd745a37426666, type: 2}
+  LegsAnimations:
+  - {fileID: 11400000, guid: 7d2130833dfe390438032b283d2a01c4, type: 2}
+  - {fileID: 11400000, guid: 3e7304b31537bba46a571de816dbe2ce, type: 2}
+  - {fileID: 11400000, guid: a7f027b227fc99c40b05b98217c858ab, type: 2}

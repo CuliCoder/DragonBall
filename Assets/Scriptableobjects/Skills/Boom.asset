@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Boom
   m_EditorClassIdentifier: 
   animation: {fileID: 7400000, guid: cb5e71c636dc7014393808d51b5a82f8, type: 2}
-  totalFrame: 300
+  totalFrame: 600
   audioClips:
   - {fileID: 8300000, guid: 61ea68ed40fcfc642817db7e44f13c20, type: 3}
   - {fileID: 8300000, guid: 7b40a4d4f6d74eb49984567451a02452, type: 3}

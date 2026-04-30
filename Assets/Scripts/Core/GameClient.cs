@@ -25,7 +25,8 @@ public class GameClient : MonoBehaviour
     [SerializeField] private CardPlayer _cardPlayerPrefab;
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private GameObject btnPlay;
-
+    [SerializeField] private GameObject EnemyPrefab;
+    [SerializeField] private SkinData brolySkin;
     // ========== LOCAL PLAYER INPUT ==========
     private Vector2 _inputDirection;
     private bool _jumpPressed;
@@ -35,6 +36,7 @@ public class GameClient : MonoBehaviour
     // ========== REMOTE PLAYERS ==========
     // sessionId → GameObject của remote player
     private readonly Dictionary<int, RemotePlayer> _remotePlayers = new();
+    private readonly Dictionary<int, EnemyController> _enemies = new();
     private LocalPlayerController _localPlayer;
 
     // ============================================================
@@ -67,6 +69,8 @@ public class GameClient : MonoBehaviour
         net.OnListRooms += HandleListRooms;
         net.OnJoinWorldAck += HandleJoinWorldAck;
         net.OnTeleport += HandleTeleport;
+        net.OnBossState += HandleBossState;
+        net.OnBossDefeated += HandleBossDefeated;
     }
 
     private void OnDestroy()
@@ -83,6 +87,8 @@ public class GameClient : MonoBehaviour
         net.OnListRooms -= HandleListRooms;
         net.OnJoinWorldAck -= HandleJoinWorldAck;
         net.OnTeleport -= HandleTeleport;
+        net.OnBossState -= HandleBossState;
+        net.OnBossDefeated -= HandleBossDefeated;
     }
 
     // ============================================================
@@ -113,23 +119,7 @@ public class GameClient : MonoBehaviour
     // ============================================================
     private void FixedUpdate()
     {
-        // if (!NetworkManager.Instance.IsConnected) return;
-
-        // _clientTick++;
-
-        // // Gửi input lên server mỗi fixed tick
-        // _ = NetworkManager.Instance.SendAsync(new C_InputPacket
-        // {
-        //     DirX = _inputDirection.x,
-        //     DirY = _inputDirection.y,
-        //     Fly = _jumpPressed,
-        //     Attack = _attackPressed,
-        //     Tick = _clientTick
-        // });
-
-        // // Reset button flags (chỉ gửi 1 lần per press)
-        // _jumpPressed = false;
-        // _attackPressed = false;
+        
     }
     private void HandleListRooms(S_ListRoomsPacket packet)
     {
@@ -162,6 +152,27 @@ public class GameClient : MonoBehaviour
             _localPlayer.transform.position = new Vector3(packet.TargetPosition.X, packet.TargetPosition.Y, 0);
             Debug.Log($"[GameClient] Teleported to {packet.TargetPosition}");
         }
+    }
+    private void HandleBossState(S_BossStatePacket packet)
+    {
+        if (_enemies.TryGetValue(packet.BossId, out var enemy))
+        {
+            enemy.Move(new Vector2(packet.BossX, packet.BossY));
+            // enemy.FacingDirection(new Vector2(packet.VelX, 0));
+        }
+        else
+        {
+            Debug.Log($"[GameClient] Spawn boss {packet.BossId} at ({packet.BossX}, {packet.BossY})");
+            var go = Instantiate(EnemyPrefab, new Vector3(packet.BossX, packet.BossY, 0), Quaternion.identity);
+            go.GetComponent<PlayerAnimationManager>().SetSkin(brolySkin);
+            EnemyController boss = go.AddComponent<EnemyController>();
+            boss.Initialize(packet.BossId, packet.BossType); // TODO: lấy type từ server
+            _enemies[packet.BossId] = boss;
+        }
+    }
+    private void HandleBossDefeated(S_BossDefeatPacket packet)
+    {
+        
     }
     // ============================================================
     //  PACKET HANDLERS
@@ -206,10 +217,17 @@ public class GameClient : MonoBehaviour
                 {
                     var serverPos = new Vector3(playerState.X, playerState.Y, 0);
                     float drift = Vector3.Distance(_localPlayer.transform.position, serverPos);
-                    if (drift > 2f)
+                    if (drift > 6f)
                     {
                         _localPlayer.transform.position = serverPos;
-                        Debug.Log($"[Reconcile] Snap local player về server pos, drift={drift:F2}");
+                    }
+                    else if (drift > 1f)
+                    {
+                        _localPlayer.transform.position = Vector3.Lerp(
+                            _localPlayer.transform.position,
+                            serverPos,
+                            0.08f
+                        );
                     }
                 }
                 continue;

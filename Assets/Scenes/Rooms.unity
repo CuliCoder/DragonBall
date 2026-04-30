@@ -1255,6 +1255,8 @@ MonoBehaviour:
   _cardPlayerPrefab: {fileID: 6391090768185341326, guid: 6a0f5bfb78f20dc45b83f320102d0953, type: 3}
   titleText: {fileID: 1474565646}
   btnPlay: {fileID: 1299871957}
+  EnemyPrefab: {fileID: 6619462038092434537, guid: 7acfd2385931d7f4ea595ff9eadfb3d4, type: 3}
+  brolySkin: {fileID: 11400000, guid: 2bc7c6097b5341a4ab40aa41a1d1bf5a, type: 2}
 --- !u!4 &1796796464
 Transform:
   m_ObjectHideFlags: 0

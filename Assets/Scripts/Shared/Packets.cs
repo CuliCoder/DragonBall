@@ -48,7 +48,8 @@ public class C_InputPacket : BasePacket
     public bool Attack { get; set; }
     public int Tick { get; set; }
     public float DeltaTime { get; set; }
-    public PlayerState PlayerState { get; set; }
+    public bool isNumber1 { get; set; }
+    public PlayerState PlayerState { get; set; } = new();
 }
 
 public class C_JoinRoomPacket : BasePacket

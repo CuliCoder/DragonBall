@@ -11,8 +11,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
-using UnityEngine.SocialPlatforms;
-using UnityEditor;
 public class GameClient : MonoBehaviour
 {
     [Header("Config")]
@@ -21,6 +19,7 @@ public class GameClient : MonoBehaviour
 
     [Header("Prefabs")]
     [SerializeField] private GameObject PlayerPrefab;
+    [SerializeField] private SkinData defaultSkin;
     [SerializeField] private CardRoom _cardRoomPrefab;
     [SerializeField] private Transform _cardParent;
     [SerializeField] private CardPlayer _cardPlayerPrefab;
@@ -234,6 +233,7 @@ public class GameClient : MonoBehaviour
                 if (_localPlayer == null)
                 {
                     var go = Instantiate(PlayerPrefab, new Vector3(playerState.X, playerState.Y, 0), Quaternion.identity);
+                    go.GetComponent<PlayerAnimationManager>().SetSkin(defaultSkin);
                     _localPlayer = go.AddComponent<LocalPlayerController>();
                     _localPlayer.Initialize(playerState.PlayerId, playerState.PlayerName);
                 }
@@ -247,8 +247,9 @@ public class GameClient : MonoBehaviour
             if (PlayerPrefab != null && !_remotePlayers.ContainsKey(playerState.PlayerId))
             {
                 var go = Instantiate(PlayerPrefab, new Vector3(playerState.X, playerState.Y, 0), Quaternion.identity);
+                go.GetComponent<PlayerAnimationManager>().SetSkin(defaultSkin);
                 RemotePlayer remotePlayer = go.AddComponent<RemotePlayer>();
-                remotePlayer.Initialize(playerState.PlayerId, playerState.PlayerName, go.transform, go.transform.position);
+                remotePlayer.Initialize(playerState.PlayerId, playerState.PlayerName, go.transform.position);
                 _remotePlayers[playerState.PlayerId] = remotePlayer;
             }
         }
@@ -260,7 +261,7 @@ public class GameClient : MonoBehaviour
 
         if (_remotePlayers.TryGetValue(packet.PlayerId, out var remote))
         {
-            Destroy(remote.Transform.gameObject);
+            Destroy(remote.gameObject);
             _remotePlayers.Remove(packet.PlayerId);
         }
     }

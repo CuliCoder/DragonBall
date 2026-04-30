@@ -10,6 +10,7 @@ public class IdleState : IState
     }
     public void Enter()
     {
+        stateManager.StopAnimation();
         stateManager.SetAnimation(AnimationType.Idle);
     }
 
@@ -18,13 +19,18 @@ public class IdleState : IState
 
     }
 
-    public void Update()
+    public void Update()    
     {
         if (player is LocalPlayerController localPlayer)
         {
             if (localPlayer.Velocity.x != 0)
             {
                 stateManager.ChangeState(stateManager.runState);
+            }
+            else if (localPlayer.isBoom)
+            {
+                localPlayer.isBoom = true;
+                stateManager.ChangeState(stateManager.boomState);
             }
         }
 

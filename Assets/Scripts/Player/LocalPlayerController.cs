@@ -7,6 +7,7 @@ public class LocalPlayerController : PlayerController
     private bool isGrounded = false;
     private float timer = 0f;
     private bool isFlying = true;
+    public bool isBoom = false;
     private void Awake()
     {
         FindAnyObjectByType<CinemachineVirtualCamera>().Follow = transform;
@@ -24,6 +25,11 @@ public class LocalPlayerController : PlayerController
     }
     private void Update()
     {
+        useBoom();
+        if(isBoom)
+        {
+            return;
+        }
         Move();
     }
     public override void Move()
@@ -57,9 +63,16 @@ public class LocalPlayerController : PlayerController
         }
         FacingDirection(InputManager.Instance.MoveInput);
     }
+    private void useBoom()
+    {
+        if (InputManager.Instance.number1)
+        {
+            isBoom = true;
+        }
+    }
     private void ApplyGravity()
     {
-        if (isFlying)
+        if (isFlying || isBoom)
         {
             return;
         }
@@ -107,6 +120,7 @@ public class LocalPlayerController : PlayerController
             DirX = InputManager.Instance.MoveInput.x,
             DirY = InputManager.Instance.MoveInput.y,
             Fly = InputManager.Instance.MoveInput.y > 0,
+            isNumber1 = InputManager.Instance.number1,
             Attack = false,
             Tick = 0,
             PlayerState = new PlayerState
@@ -115,17 +129,32 @@ public class LocalPlayerController : PlayerController
                 Y = currentPos.y,
                 VelX = Velocity.x,
                 VelY = Velocity.y,
-                AnimState = isFlying ? "fly" : (Velocity.x != 0 ? "run" : "idle")
+                AnimState = GetAnimationState()
             },
             DeltaTime = Time.fixedDeltaTime,
         };
-        
+
         Debug.Log($"[LocalPlayerController] Sending position: current ({currentPos.x:F2}, {currentPos.y:F2}), target ({targetPos.x:F2}, {targetPos.y:F2})");
-        
+
         // Log JSON payload để debug
         string json = Newtonsoft.Json.JsonConvert.SerializeObject(packet);
         Debug.Log($"[LocalPlayerController] JSON payload: {json}");
-        
+
         _ = NetworkManager.Instance.SendAsync(packet);
+    }
+    private string GetAnimationState()
+    {
+        if (isBoom)
+        {
+            return "boom";
+        }
+        else if (Velocity.x != 0)
+        {
+            return "run";
+        }
+        else
+        {
+            return "idle";
+        }
     }
 }

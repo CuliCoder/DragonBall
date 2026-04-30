@@ -3,15 +3,21 @@ public class PlayerStateManager : MonoBehaviour
 {
     private PlayerController player;
     private PlayerAnimationManager animationManager;
+    [SerializeField]
+    public Skills skills;
+    public Animator animator { get; private set; }
     public IState currentState { get; private set; }
     public IState idleState { get; private set; }
     public IState runState { get; private set; }
+    public IState boomState { get; private set; }
     public void Init(PlayerController playerController, PlayerAnimationManager animManager)
     {
         player = playerController;
         animationManager = animManager;
+        animator = GetComponent<Animator>();
         idleState = new IdleState(player, this);
         runState = new RunState(player, this);
+        boomState = new BoomState(player, this);
         currentState = idleState;
         currentState.Enter();
     }
@@ -35,5 +41,13 @@ public class PlayerStateManager : MonoBehaviour
     public void SetAnimation(AnimationType type)
     {
         animationManager.PlayAnimation(type);
+    }
+    public void playAnimation(AnimationClip animation)
+    {
+        animator.Play(animation.name);
+    }
+    public void StopAnimation()
+    {
+        animator.Play("none");
     }
 }

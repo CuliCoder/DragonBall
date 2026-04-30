@@ -57,3 +57,6 @@ TagManager:
   - name: Head
     uniqueID: 2203777489
     locked: 0
+  - name: Skill
+    uniqueID: 2152765601
+    locked: 0

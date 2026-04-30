@@ -10,6 +10,7 @@ public class RunState : IState
     }
     public void Enter()
     {
+        stateManager.StopAnimation();
         stateManager.SetAnimation(AnimationType.Run);
     }
 
@@ -26,10 +27,15 @@ public class RunState : IState
             {
                 stateManager.ChangeState(stateManager.idleState);
             }
+            else if (localPlayer.isBoom)
+            {
+                localPlayer.isBoom = true;
+                stateManager.ChangeState(stateManager.boomState);
+            }
         }
         else
         {
-            
+
         }
 
     }

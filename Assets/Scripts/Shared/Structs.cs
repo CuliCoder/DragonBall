@@ -5,17 +5,15 @@ public struct RoomInfo
     public int PlayerCount { get; set; }
     public int MaxPlayer { get; set; }
 }
-public struct PlayerState
+public class PlayerState
 {
     public int PlayerId { get; set; }
     public string PlayerName { get; set; }
     public float X { get; set; }
     public float Y { get; set; }
     public float VelX { get; set; }
-    public float VelY { get; set; }
+    public float VelY { get; set; } 
     public string AnimState { get; set; }
-    public Vector2 Position { get; set; }
-
 }
 public struct PlayerInfo
 {

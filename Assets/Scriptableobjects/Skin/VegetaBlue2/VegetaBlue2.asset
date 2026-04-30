@@ -16,9 +16,12 @@ MonoBehaviour:
   HeadAnimations:
   - {fileID: 11400000, guid: 6f2c583e1f3f7ee43a61c757e499537b, type: 2}
   - {fileID: 11400000, guid: c718aa24a99daa648ac771d8e78e03bd, type: 2}
+  - {fileID: 11400000, guid: 7c8cdcf44b3338340a692d227c5c14fb, type: 2}
   BodyAnimations:
   - {fileID: 11400000, guid: db7fa44f6ec4c1c4a96d64e39798211c, type: 2}
   - {fileID: 11400000, guid: 45cde2ca53c295c439e2ef461892f791, type: 2}
+  - {fileID: 11400000, guid: 5c05da6809945c24189a0880c1c2e2ab, type: 2}
   LegsAnimations:
   - {fileID: 11400000, guid: 63ce2c0c782d25c4f964347c05474665, type: 2}
   - {fileID: 11400000, guid: 099a8dee2ce250c40a0649e1b4e9f7c2, type: 2}
+  - {fileID: 11400000, guid: 3e5cdd49a35a6ff4eaca4675139b2879, type: 2}

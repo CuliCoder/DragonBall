@@ -4,6 +4,8 @@ public class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
     public Vector2 MoveInput { get; private set; }
+    public bool number1 { get; private set; }
+    public bool number2 { get; private set; }
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -18,6 +20,8 @@ public class InputManager : MonoBehaviour
     void Update()
     {
         MoveInput = GetMoveInput();
+        number1 = Input.GetKeyDown(KeyCode.Alpha1);
+        number2 = Input.GetKeyDown(KeyCode.Alpha2);
     }
     private Vector2 GetMoveInput()
     {
@@ -26,4 +30,4 @@ public class InputManager : MonoBehaviour
 
         return new Vector2(horizontal, vertical);
     }
-}
+}   

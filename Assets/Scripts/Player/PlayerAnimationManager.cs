@@ -15,4 +15,8 @@ public class PlayerAnimationManager : MonoBehaviour
         BodyAnimator.PlayAnimation(skinData.GetSpriteAnimation(BodyPart.Body, animationType));
         LegsAnimator.PlayAnimation(skinData.GetSpriteAnimation(BodyPart.Legs, animationType));
     }
+    public void SetSkin(SkinData newSkin)
+    {
+        skinData = newSkin;
+    }
 }

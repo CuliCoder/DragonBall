@@ -9,19 +9,15 @@ using UnityEngine;
 // ============================================================
 public class RemotePlayer : PlayerController
 {
-    public Transform Transform { get; private set; }
-
     // Lưu 2 snapshot gần nhất để lerp giữa chúng
     private PlayerState _from;
     private PlayerState _to;
     private float _lerpT = 1f; // 0 = from, 1 = to
     private const float LERP_SPEED = 15f;
 
-    public void Initialize(int id, string playerName, Transform transform, Vector3 initialPosition)
+    public void Initialize(int id, string playerName, Vector3 initialPosition)
     {
         base.Initialize(id, playerName);
-        Transform = transform;
-        Transform.position = initialPosition;
         // Khởi tạo snapshot rỗng
         _from = new PlayerState { PlayerId = id, X = initialPosition.x, Y = initialPosition.y };
         _to = new PlayerState { PlayerId = id, X = initialPosition.x, Y = initialPosition.y };
@@ -46,6 +42,8 @@ public class RemotePlayer : PlayerController
                 stateManager.ChangeState(stateManager.runState);
             else if (newState.AnimState == "idle" && stateManager.currentState is not IdleState)
                 stateManager.ChangeState(stateManager.idleState);
+            else if (newState.AnimState == "boom" && stateManager.currentState is not BoomState)
+                stateManager.ChangeState(stateManager.boomState);
         }
     }
 
@@ -56,7 +54,7 @@ public class RemotePlayer : PlayerController
 
         _lerpT = Mathf.MoveTowards(_lerpT, 1f, Time.deltaTime * LERP_SPEED);
 
-        Transform.position = Vector3.Lerp(
+        transform.position = Vector3.Lerp(
             new Vector3(_from.X, _from.Y, 0),
             new Vector3(_to.X, _to.Y, 0),
             _lerpT

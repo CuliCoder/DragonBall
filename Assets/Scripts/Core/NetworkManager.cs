@@ -194,21 +194,38 @@ public class NetworkManager : MonoBehaviour
 
     public async Task SendRawAsync(byte[] data)
     {
-        if (!IsConnected) return;
+        if (!IsConnected || _stream == null || _sendLock == null) return;
 
-        await _sendLock.WaitAsync();
         try
         {
+            await _sendLock.WaitAsync();
+        }
+        catch
+        {
+            // _sendLock bị dispose hoặc null
+            return;
+        }
+
+        try
+        {
+            if (_stream == null) return;
             await _stream.WriteAsync(data);
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[Network] Lỗi gửi: {ex.Message}");
+            Debug.LogError($"[Network] Lỗi gửi: {ex.GetType().Name} - {ex.Message}");
             CleanupConnection();
         }
         finally
         {
-            _sendLock.Release();
+            if (_sendLock != null)
+            {
+                try
+                {
+                    _sendLock.Release();
+                }
+                catch { /* _sendLock đã bị dispose */ }
+            }
         }
     }
 
@@ -235,12 +252,21 @@ public class NetworkManager : MonoBehaviour
 
     private async Task<bool> ReadExactAsync(byte[] buf, int count, CancellationToken token)
     {
+        if (_stream == null) return false;
+        
         int total = 0;
         while (total < count)
         {
-            int n = await _stream.ReadAsync(buf, total, count - total, token);
-            if (n == 0) return false;
-            total += n;
+            try
+            {
+                int n = await _stream.ReadAsync(buf, total, count - total, token);
+                if (n == 0) return false;
+                total += n;
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
         }
         return true;
     }
@@ -259,6 +285,11 @@ public class NetworkManager : MonoBehaviour
     }
 
     private void OnDestroy()
+    {
+        CleanupConnection();
+    }
+
+    private void OnApplicationQuit()
     {
         CleanupConnection();
     }

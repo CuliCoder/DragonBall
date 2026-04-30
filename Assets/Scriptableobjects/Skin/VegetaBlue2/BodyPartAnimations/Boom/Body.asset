@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 039c3fcdcd374a94aa1e503a104e068f, type: 3}
+  m_Name: Body
+  m_EditorClassIdentifier: 
+  animationType: 3
+  frames:
+  - {fileID: 21300000, guid: 97241c9e317526a4299ce538e31ef2b5, type: 3}
+  - {fileID: 21300000, guid: f0233ec111e422f46acaadcdbd2b0029, type: 3}
+  - {fileID: 21300000, guid: 545cb023f8648b9448f59131ec5cf332, type: 3}
+  frameRate: 0.2
+  loop: 0
+  offset: {x: 0, y: 0}

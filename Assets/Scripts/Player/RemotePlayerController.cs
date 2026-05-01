@@ -7,7 +7,7 @@ using UnityEngine;
 //    Server gửi 50Hz nhưng game render 60-144fps
 //    → cần nội suy giữa 2 snapshot để không giật
 // ============================================================
-public class RemotePlayer : PlayerController
+public class RemotePlayerController : PlayerController
 {
     // Lưu 2 snapshot gần nhất để lerp giữa chúng
     private PlayerState _from;

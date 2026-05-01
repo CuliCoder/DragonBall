@@ -32,6 +32,15 @@ public class EnemyController : MonoBehaviour
     public int Level { get; set; }
     public float Speed { get; set; }
     private EnemyStateManager _stateManager = null!;
+    private bool isGrounded = false;
+
+    [SerializeField] private Transform groundCheckPoint;
+    [SerializeField] private Transform wallCheckPoint;
+    [SerializeField] private float groundCheckDistance = 0.2f;
+    [SerializeField] private float wallCheckDistance = 0.2f;
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private LayerMask wallLayer;
+
     public void Initialize(int enemyId, BossType bossType)
     {
         EnemyId = enemyId;
@@ -103,5 +112,45 @@ public class EnemyController : MonoBehaviour
         }
         transform.position = newPosition;
     }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.CompareTag("Ground"))
+        {
+            isGrounded = true;
+        }
+    }
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Ground"))
+        {
+            isGrounded = false;
+        }
+    }
 
+    public bool HasGroundAhead()
+    {
+        Vector2 origin = groundCheckPoint != null ? (Vector2)groundCheckPoint.position : (Vector2)transform.position;
+        RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.down, groundCheckDistance, groundLayer);
+        return hit.collider != null;
+    }
+
+    public bool HasWallAhead()
+    {
+        Vector2 origin = wallCheckPoint != null ? (Vector2)wallCheckPoint.position : (Vector2)transform.position;
+        Vector2 direction = transform.localScale.x > 0 ? Vector2.right : Vector2.left;
+        RaycastHit2D hit = Physics2D.Raycast(origin, direction, wallCheckDistance, wallLayer);
+        return hit.collider != null;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Vector2 groundOrigin = groundCheckPoint != null ? (Vector2)groundCheckPoint.position : (Vector2)transform.position;
+        Gizmos.DrawLine(groundOrigin, groundOrigin + Vector2.down * groundCheckDistance);
+
+        Gizmos.color = Color.red;
+        Vector2 wallOrigin = wallCheckPoint != null ? (Vector2)wallCheckPoint.position : (Vector2)transform.position;
+        Vector2 direction = transform.localScale.x > 0 ? Vector2.right : Vector2.left;
+        Gizmos.DrawLine(wallOrigin, wallOrigin + direction * wallCheckDistance);
+    }
 }

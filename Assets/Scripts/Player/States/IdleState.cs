@@ -23,7 +23,7 @@ public class IdleState : IState
     {
         if (player is LocalPlayerController localPlayer)
         {
-            if (localPlayer.Velocity.x != 0)
+            if (localPlayer.Rb.velocity.x != 0)
             {
                 stateManager.ChangeState(stateManager.runState);
             }

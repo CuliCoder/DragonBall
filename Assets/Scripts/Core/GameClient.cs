@@ -18,7 +18,8 @@ public class GameClient : MonoBehaviour
     [SerializeField] private int _serverPort = 8888;
 
     [Header("Prefabs")]
-    [SerializeField] private GameObject PlayerPrefab;
+    [SerializeField] private LocalPlayerController LocalPlayerPrefab;
+    [SerializeField] private RemotePlayerController RemotePlayerPrefab;
     [SerializeField] private SkinData defaultSkin;
     [SerializeField] private CardRoom _cardRoomPrefab;
     [SerializeField] private Transform _cardParent;
@@ -35,7 +36,7 @@ public class GameClient : MonoBehaviour
 
     // ========== REMOTE PLAYERS ==========
     // sessionId → GameObject của remote player
-    private readonly Dictionary<int, RemotePlayer> _remotePlayers = new();
+    private readonly Dictionary<int, RemotePlayerController> _remotePlayers = new();
     private readonly Dictionary<int, EnemyController> _enemies = new();
     private LocalPlayerController _localPlayer;
 
@@ -251,9 +252,8 @@ public class GameClient : MonoBehaviour
             {
                 if (_localPlayer == null)
                 {
-                    var go = Instantiate(PlayerPrefab, new Vector3(playerState.X, playerState.Y, 0), Quaternion.identity);
-                    go.GetComponent<PlayerAnimationManager>().SetSkin(defaultSkin);
-                    _localPlayer = go.AddComponent<LocalPlayerController>();
+                    LocalPlayerController _localPlayer = Instantiate(LocalPlayerPrefab, new Vector3(playerState.X, playerState.Y, 0), Quaternion.identity);
+                    _localPlayer.GetComponent<PlayerAnimationManager>().SetSkin(defaultSkin);
                     _localPlayer.Initialize(playerState.PlayerId, playerState.PlayerName);
                 }
                 Debug.Log($"[GameClient] Local player instantiated with ID {playerState.PlayerName}");
@@ -263,13 +263,12 @@ public class GameClient : MonoBehaviour
             Debug.Log($"[GameClient] {playerState.PlayerName} vào phòng, ID: {NetworkManager.Instance.LocalPlayerId}");
 
             // Spawn remote player
-            if (PlayerPrefab != null && !_remotePlayers.ContainsKey(playerState.PlayerId))
+            if (RemotePlayerPrefab != null && !_remotePlayers.ContainsKey(playerState.PlayerId))
             {
-                var go = Instantiate(PlayerPrefab, new Vector3(playerState.X, playerState.Y, 0), Quaternion.identity);
+                RemotePlayerController go = Instantiate(RemotePlayerPrefab, new Vector3(playerState.X, playerState.Y, 0), Quaternion.identity);
                 go.GetComponent<PlayerAnimationManager>().SetSkin(defaultSkin);
-                RemotePlayer remotePlayer = go.AddComponent<RemotePlayer>();
-                remotePlayer.Initialize(playerState.PlayerId, playerState.PlayerName, go.transform.position);
-                _remotePlayers[playerState.PlayerId] = remotePlayer;
+                go.Initialize(playerState.PlayerId, playerState.PlayerName, go.transform.position);
+                _remotePlayers[playerState.PlayerId] = go;
             }
         }
     }

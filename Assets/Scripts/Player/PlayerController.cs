@@ -5,12 +5,16 @@ public abstract class PlayerController : MonoBehaviour
     private TextMeshPro _playerIdText;
     public int PlayerId { get; private set; }
     public string PlayerName { get; private set; }
+    [SerializeField] private LayerMask groundLayer;
+    public Rigidbody2D Rb { get; private set; }
     public void Initialize(int playerId, string playerName)
     {
         PlayerId = playerId;
         PlayerName = playerName;
         setName(PlayerName);
         GetComponent<PlayerStateManager>().Init(this, GetComponent<PlayerAnimationManager>());
+        Rb = GetComponent<Rigidbody2D>();
+
     }
     private void setName(string name)
     {

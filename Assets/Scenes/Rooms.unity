@@ -1248,7 +1248,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _serverIp: 127.0.0.1
   _serverPort: 8888
-  PlayerPrefab: {fileID: 7493073117709588646, guid: 18f7fcb18a1ff9b499840da267b688e6, type: 3}
+  LocalPlayerPrefab: {fileID: 4854048635334306163, guid: 9ee65618a71fd014ab50ffa67d45371b, type: 3}
+  RemotePlayerPrefab: {fileID: 5270540938466624302, guid: 8910e6a64bdbc294aba307cd08a0fd47, type: 3}
   defaultSkin: {fileID: 11400000, guid: 389bb5bba96264d4492f5088ad67684e, type: 2}
   _cardRoomPrefab: {fileID: 3664239583563112424, guid: 22cbd316aa2c8d044a7e1e9fbc8bb4df, type: 3}
   _cardParent: {fileID: 613893991}

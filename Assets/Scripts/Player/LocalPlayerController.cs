@@ -2,9 +2,8 @@ using UnityEngine;
 using Cinemachine;
 public class LocalPlayerController : PlayerController
 {
-    public const float SPEED = 5f;
+    public const float SPEED = 7f;
     private const float INPUT_SEND_INTERVAL = 1f / 30f;
-    public Vector2 Velocity = Vector2.zero;
     private bool isGrounded = false;
     private float timer = 0f;
     private bool isFlying = true;
@@ -25,15 +24,14 @@ public class LocalPlayerController : PlayerController
     }
     private void FixedUpdate()
     {
-        
-        ApplyGravity();
-        transform.position += (Vector3)Velocity;
         _inputSendTimer += Time.fixedDeltaTime;
         if (_inputSendTimer >= INPUT_SEND_INTERVAL)
         {
             _inputSendTimer = 0f;
             verifyPositionWithServer();
         }
+        Move();
+        ApplyGravity(); 
         timer += Time.fixedDeltaTime;
         if (isFlying && timer > 1f)
         {
@@ -43,43 +41,48 @@ public class LocalPlayerController : PlayerController
     private void Update()
     {
         useBoom();
-        Move();
     }
     public override void Move()
     {
-        if(isBoom)
+        if (isBoom)
         {
-            Velocity = Vector2.zero;
+            Rb.velocity = Vector2.zero;
             return;
         }
+        MoveX();
+        MoveY();
+        FacingDirection(InputManager.Instance.MoveInput);
+    }
+    private void MoveY()
+    {
+        if (InputManager.Instance.MoveInput.y > 0)
+        {
+            Rb.velocity = new Vector2(Rb.velocity.x, SPEED);
+            isGrounded = false;
+            isFlying = true;
+            timer = 0f;
+        }
+        else if (InputManager.Instance.MoveInput.y == 0 && isFlying)
+        {
+            Rb.velocity = new Vector2(Rb.velocity.x, 0);
+        }
+    }
+    private void MoveX()
+    {
         if (InputManager.Instance.MoveInput.x != 0)
         {
-            Velocity = new Vector2(InputManager.Instance.MoveInput.x * SPEED * Time.fixedDeltaTime, Velocity.y);
+            Rb.velocity = new Vector2(InputManager.Instance.MoveInput.x * SPEED , Rb.velocity.y);
+            if (isFlying)
+            {
+                isGrounded = false;
+                isFlying = true;
+                timer = 0f;
+            }
         }
         else
         {
-            Velocity = new Vector2(0, Velocity.y);
+            Rb.velocity = new Vector2(0, Rb.velocity.y);
         }
-        if (InputManager.Instance.MoveInput.y > 0)
-        {
-            Velocity = new Vector2(Velocity.x, 0.1f);
-            isGrounded = false;
-            isFlying = true;
-            timer = 0f;
-        }
-        else if (InputManager.Instance.MoveInput.x != 0 && InputManager.Instance.MoveInput.y == 0 && isFlying)
-        {
-            Velocity = new Vector2(Velocity.x, 0);
-            isGrounded = false;
-            isFlying = true;
-            timer = 0f;
-        }
-        else if (InputManager.Instance.MoveInput.y <= 0 && isFlying)
-        {
-            Velocity = new Vector2(Velocity.x, 0);
-            isFlying = true;
-        }
-        FacingDirection(InputManager.Instance.MoveInput);
     }
     private void useBoom()
     {
@@ -94,31 +97,7 @@ public class LocalPlayerController : PlayerController
         {
             return;
         }
-        if (isGrounded)
-        {
-            Velocity = new Vector2(Velocity.x, 0);
-            return;
-        }
-        Velocity += new Vector2(0, -1f * Time.fixedDeltaTime);
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        // Simple ground collision check
-        if (collision.CompareTag("Ground"))
-        {
-            Debug.Log("Player grounded");
-            isGrounded = true;
-            isFlying = false;
-        }
-    }
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-        if (collision.CompareTag("Ground"))
-        {
-            Debug.Log("Player left the ground");
-            isGrounded = false;
-        }
+        Rb.velocity += new Vector2(0, -1f);
     }
     private void verifyPositionWithServer()
     {
@@ -142,8 +121,8 @@ public class LocalPlayerController : PlayerController
             {
                 X = currentPos.x,
                 Y = currentPos.y,
-                VelX = Velocity.x,
-                VelY = Velocity.y,
+                VelX = Rb.velocity.x,
+                VelY = Rb.velocity.y,
                 AnimState = GetAnimationState()
             },
             DeltaTime = Time.fixedDeltaTime,
@@ -187,7 +166,7 @@ public class LocalPlayerController : PlayerController
         {
             return "boom";
         }
-        else if (Velocity.x != 0)
+        else if (Rb.velocity.x != 0)
         {
             return "run";
         }

@@ -20,7 +20,6 @@ public class IdleState_Enemy : IState
 
     public void Update()    
     {
-        stateManager.SetAnimation(AnimationType.Idle);
 
     }
 }

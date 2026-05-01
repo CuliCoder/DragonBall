@@ -21,7 +21,6 @@ public class RunState_Enemy : IState
 
     public void Update()
     {
-        // stateManager.SetAnimation(AnimationType.Run);
 
     }
 }

@@ -153,12 +153,13 @@ public class S_BossStatePacket : BasePacket
 {
     public override PacketType Type => PacketType.S_BossState;
     public BossType BossType { get; set; }
-    public int BossId { get; set; }       // ID của boss đang tấn công
+    public int BossId { get; set; }
     public float BossX { get; set; }
     public float BossY { get; set; }
     public int HpCurrent { get; set; }
     public int HpMax { get; set; }
-    public string AnimState { get; set; }
+    public float speed { get; set; }
+    public EnemyActionState AnimState { get; set; } // idle, run, attack, die, etc.
 }
 
 public class S_BossDefeatPacket : BasePacket

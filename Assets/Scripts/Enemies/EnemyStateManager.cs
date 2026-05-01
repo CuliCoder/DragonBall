@@ -24,6 +24,10 @@ public class EnemyStateManager : MonoBehaviour
     }
     public void ChangeState(IState newState)
     {
+        if(newState == currentState)
+        {
+            return;
+        }
         if (currentState != null)
         {
             currentState.Exit();

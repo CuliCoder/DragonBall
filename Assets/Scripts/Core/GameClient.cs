@@ -157,7 +157,7 @@ public class GameClient : MonoBehaviour
     {
         if (_enemies.TryGetValue(packet.BossId, out var enemy))
         {
-            enemy.Move(new Vector2(packet.BossX, packet.BossY));
+            enemy.UpdateState(packet);
             // enemy.FacingDirection(new Vector2(packet.VelX, 0));
         }
         else
@@ -168,6 +168,7 @@ public class GameClient : MonoBehaviour
             EnemyController boss = go.AddComponent<EnemyController>();
             boss.Initialize(packet.BossId, packet.BossType); // TODO: lấy type từ server
             _enemies[packet.BossId] = boss;
+            boss.UpdateState(packet);
         }
     }
     private void HandleBossDefeated(S_BossDefeatPacket packet)
